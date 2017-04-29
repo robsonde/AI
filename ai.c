@@ -7,6 +7,7 @@
 #include "ai.h"
 
 
+
 // global settings from commandline
 int NumOfBrains=1000;
 int NumOfGenerations=100;
