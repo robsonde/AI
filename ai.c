@@ -69,25 +69,26 @@ void CreateOneBrain(struct Brain *A)
     A->SizeLayer[4] = 32;
     A->SizeLayer[5] = 4;
 
-    int TotalNeurons = 0;
+    A->Neurons = malloc(A->NumLayers * sizeof(bool *));
+
     for (int t = 0; t < A->NumLayers; t++) {
-	TotalNeurons = TotalNeurons + A->SizeLayer[t];
+	*(A->Neurons + t) = malloc(A->SizeLayer[t] * sizeof(bool));
     }
-    A->Neuron = malloc(TotalNeurons * sizeof(bool));
 
-    int TotalSynapse = 0;
+    A->Synapses = malloc(A->NumLayers * sizeof(float *));
+
     for (int t = 0; t < (A->NumLayers - 1); t++) {
-	TotalSynapse =
-	    TotalSynapse + (A->SizeLayer[t] * A->SizeLayer[t + 1]);
+	*(A->Synapses + t) =
+	    malloc((A->SizeLayer[t] * A->SizeLayer[t + 1]) *
+		   sizeof(float));
     }
-    A->NumSynapse = TotalSynapse;
-    A->Synapse = malloc(TotalSynapse * sizeof(float));
 
-    for (int t = 0; t <= TotalSynapse; t++) {
-	*(A->Synapse + t) = (rand() % 1024) - 512;
+    for (int t = 0; t < (A->NumLayers - 1); t++) {
+	for (int i = 0; i < (A->SizeLayer[t] * A->SizeLayer[t + 1]); i++) {
+	    *(*(A->Synapses + t)+i) = (rand() % 1024) - 512;
+	}
     }
 }
-
 
 
 
@@ -112,8 +113,11 @@ void SaveOneBrain(struct Brain *A, int i)
     fwrite("Br", 1, 2, file_handel);
     fwrite(&NumLayers, 1, sizeof(int), file_handel);
     fwrite(A->SizeLayer, 1, NumLayers * sizeof(int), file_handel);
-    fwrite(&TotalSynapse, 1, sizeof(int), file_handel);
-    fwrite(A->Synapse, 1, (TotalSynapse * sizeof(float)), file_handel);
+
+	for (int t=0; t<(A->NumLayers - 1); t++){
+	int Num=(A->SizeLayer[t] * A->SizeLayer[t + 1]);
+   	fwrite(*(A->Synapses+t), 1, (Num * sizeof(float)), file_handel);
+	}
     fclose(file_handel);
 }
 
@@ -148,8 +152,8 @@ void LoadOneBrain(struct Brain *A, int i)
     A->SizeLayer = malloc(NumLayers * sizeof(int));
     fread(A->SizeLayer, 1, NumLayers * sizeof(int), file_handel);
     fread(&TotalSynapse, 1, sizeof(int), file_handel);
-    A->Synapse = malloc(TotalSynapse * sizeof(float));
-    fread(A->Synapse, 1, (TotalSynapse * sizeof(float)), file_handel);
+    A->Synapses = malloc(TotalSynapse * sizeof(float));
+    fread(A->Synapses, 1, (TotalSynapse * sizeof(float)), file_handel);
     fclose(file_handel);
     A->NumSynapse = TotalSynapse;
     A->NumLayers = NumLayers;

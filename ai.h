@@ -5,13 +5,14 @@
 
 // a single brain has a score and an array of neurons and weightings 
 struct Brain {
-    int Score;			//score of brain
-    int NumLayers;		// how many layers of neurons
-    int *SizeLayer;		// how many neurons at layer
-    bool *Neuron;		// neurons 
-    int NumSynapse;		// How many Synapse
-    float *Synapse;		// weighting between neurons
+	int Score;			//score of brain
+	int NumLayers;		// how many layers of neurons
+	int *SizeLayer;		// how many neurons at layer
+	bool **Neurons;	// collection of Neurons
+	int NumSynapse;		// How many Synapse
+	float **Synapses;	// weighting between neurons
 };
+
 
 
 // global options set from commandline
