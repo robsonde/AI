@@ -4,13 +4,14 @@
 
 
 // a single brain has a score and an array of neurons and weightings 
-struct Brain {
-	int Score;			//score of brain
-	int NumLayers;		// how many layers of neurons
-	int *SizeLayer;		// how many neurons at layer
-	bool **Neurons;	// collection of Neurons
-	int NumSynapse;		// How many Synapse
-	float **Synapses;	// weighting between neurons
+struct Brain
+{
+  int Score;			//score of brain
+  int NumLayers;		// how many layers of neurons
+  int *SizeLayer;		// how many neurons at layer
+  bool **Neurons;		// collection of Neurons
+  int NumSynapse;		// How many Synapse
+  float **Synapses;		// weighting between neurons
 };
 
 
@@ -24,5 +25,4 @@ extern int Mutate;
 // the population is an array of brains
 struct Brain *Population;
 
-void Think(struct Brain *A);
-
+void Think (struct Brain *A);

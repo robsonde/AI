@@ -2,5 +2,4 @@
  * 
  */
 
-void Play(struct Brain *A);
-
+void Play (struct Brain *A);
