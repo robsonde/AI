@@ -23,3 +23,6 @@ extern int Mutate;
 
 // the population is an array of brains
 struct Brain *Population;
+
+void Think(struct Brain *A);
+

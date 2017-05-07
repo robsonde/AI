@@ -5,6 +5,7 @@
 #include <time.h>
 #include <ctype.h>
 #include "ai.h"
+#include "game.h"
 
 
 
@@ -233,7 +234,8 @@ int main(int argc, char **argv)
 	printf("Loaded %d brains\n", NumOfBrains);
 	printf("Ready to run brains\n");
 	for (int i=0;i<NumOfBrains;i++){
-		Think((Population + i));
+	Play((Population + i));
+	printf("Score %d\n", (Population + i)->Score );
 	}
     }
 }
