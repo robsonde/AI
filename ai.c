@@ -218,6 +218,45 @@ void Think(struct Brain *A)
 
 
 
+int cmpfunc (const void * a, const void * b)
+{
+ struct Brain A = *(struct Brain*)a;
+ struct Brain B = *(struct Brain*)b;
+ int Foo = B.Score - A.Score;
+   return Foo;
+}
+
+
+
+
+void MixBrains(struct Brain *A, struct Brain *B, struct Brain *C, int Mutate)
+{
+}
+
+
+
+
+
+void NextGeneration()
+{
+
+qsort(Population, NumOfBrains, sizeof(struct Brain), cmpfunc);
+
+printf("Best Score: %d\n", (Population)->Score );
+
+for (int f=(NumOfBrains-1);f>10;f=f-1)
+        {
+        struct Brain *A = (Population+(rand()%5));
+        struct Brain *B = (Population+(rand()%5));
+	struct Brain *C = (Population+f);
+        MixBrains(A, B, C, Mutate);
+	}
+}
+
+
+
+
+
 int main(int argc, char **argv)
 {
     srand(time(NULL));
@@ -233,9 +272,13 @@ int main(int argc, char **argv)
 	LoadBrains();
 	printf("Loaded %d brains\n", NumOfBrains);
 	printf("Ready to run brains\n");
+	
+for (int g=0; g<NumOfGenerations;g++){
+
 	for (int i=0;i<NumOfBrains;i++){
 	Play((Population + i));
-	printf("Score %d\n", (Population + i)->Score );
 	}
+	NextGeneration();
     }
+	}
 }
