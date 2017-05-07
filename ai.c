@@ -183,8 +183,44 @@ void LoadBrains()
 
 
 
+void ThinkLayer(bool * Upper_Layer, int Upper_size, bool * Lower_Layer,
+		int Lower_size, float *weight)
+{
+    float x = 0;
+    for (int Lower_index = 0; Lower_index < Lower_size; Lower_index++) {
+	x = 0;
+	for (int Upper_index = 0; Upper_index < Upper_size; Upper_index++) {
+	    float Temp_Weight =
+		*(weight + (Lower_size * Upper_index) + Lower_index);
+	    x = x + Upper_Layer[Upper_index] * Temp_Weight;
+	}
+	if (x > 0)
+	    Lower_Layer[Lower_index] = true;
+	else
+	    Lower_Layer[Lower_index] = false;
+    }
+}
+
+
+
+void Think(struct Brain *A)
+{
+    for (int i = 0; i < (A->NumLayers - 1); i++) {
+	bool *UpperLayer = *(A->Neurons + i);
+	bool *LowerLayer = *(A->Neurons + i + 1);
+	int UpperSize = *(A->SizeLayer + i);
+	int LowerSize = *(A->SizeLayer + i + 1);
+	float *Weights = *(A->Synapses + i);
+	ThinkLayer(UpperLayer, UpperSize, LowerLayer, LowerSize, Weights);
+    }
+}
+
+
+
 int main(int argc, char **argv)
 {
+    srand(time(NULL));
+
     options(argc, argv);
     Population = malloc(NumOfBrains * sizeof(struct Brain));
 
@@ -196,5 +232,8 @@ int main(int argc, char **argv)
 	LoadBrains();
 	printf("Loaded %d brains\n", NumOfBrains);
 	printf("Ready to run brains\n");
+	for (int i=0;i<NumOfBrains;i++){
+		Think((Population + i));
+	}
     }
 }
