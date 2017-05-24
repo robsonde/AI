@@ -61,14 +61,16 @@ void
 CreateOneBrain (struct Brain *A)
 {
   A->Score = 0;
-  A->NumLayers = 6;
+  A->NumLayers = 8;
   A->SizeLayer = malloc (A->NumLayers * sizeof (int));
-  A->SizeLayer[0] = 192;
-  A->SizeLayer[1] = 128;
-  A->SizeLayer[2] = 128;
-  A->SizeLayer[3] = 64;
-  A->SizeLayer[4] = 32;
-  A->SizeLayer[5] = 4;
+  A->SizeLayer[0] = 256;
+  A->SizeLayer[1] = 1024;
+  A->SizeLayer[2] = 512;
+  A->SizeLayer[3] = 256;
+  A->SizeLayer[4] = 128;
+  A->SizeLayer[5] = 64;
+  A->SizeLayer[6] = 32;
+  A->SizeLayer[7] = 4;
 
   A->Neurons = malloc (A->NumLayers * sizeof (bool *));
 
@@ -281,17 +283,28 @@ MixBrains (struct Brain *A, struct Brain *B, struct Brain *C, int Mutate)
 void
 NextGeneration ()
 {
+srand(time(NULL));
 
   qsort (Population, NumOfBrains, sizeof (struct Brain), cmpfunc);
 
   printf ("Best Score: %d\n", (Population)->Score);
 
-  for (int f = (NumOfBrains - 1); f > 10; f = f - 1)
+  // Create next generation from best 10 brains.
+  for (int f = (NumOfBrains - 1); f > 20; f = f - 1)
     {
-      struct Brain *A = (Population + (rand () % 5));
-      struct Brain *B = (Population + (rand () % 5));
+      struct Brain *A = (Population + (rand () % 9));
+      struct Brain *B = (Population + (rand () % 9));
       struct Brain *C = (Population + f);
       MixBrains (A, B, C, Mutate);
+    }
+
+  // Create 10 random brains.
+  for (int f = 20; f > 10; f = f - 1)
+    {
+      struct Brain *A = (Population + (rand () % 9));
+      struct Brain *B = (Population + (rand () % 9));
+      struct Brain *C = (Population + f);
+      MixBrains (A, B, C, 99);
     }
 }
 
@@ -302,8 +315,6 @@ NextGeneration ()
 int
 main (int argc, char **argv)
 {
-  srand (time (NULL));
-
   options (argc, argv);
   Population = malloc (NumOfBrains * sizeof (struct Brain));
 
