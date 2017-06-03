@@ -457,7 +457,7 @@ Do_Game_Loop (struct Brain *A)
 void
 Play (struct Brain *A)
 {
-  srand (0);
+  srand (time(NULL));
   Score = 0;
   InitBoard ();
   AddTile ();

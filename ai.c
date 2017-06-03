@@ -61,16 +61,19 @@ void
 CreateOneBrain (struct Brain *A)
 {
   A->Score = 0;
-  A->NumLayers = 8;
+  A->NumLayers = 11;
   A->SizeLayer = malloc (A->NumLayers * sizeof (int));
   A->SizeLayer[0] = 256;
-  A->SizeLayer[1] = 1024;
-  A->SizeLayer[2] = 512;
-  A->SizeLayer[3] = 256;
-  A->SizeLayer[4] = 128;
-  A->SizeLayer[5] = 64;
-  A->SizeLayer[6] = 32;
-  A->SizeLayer[7] = 4;
+  A->SizeLayer[1] = 2400;
+  A->SizeLayer[2] = 1600;
+  A->SizeLayer[3] = 800;
+  A->SizeLayer[4] = 400;
+  A->SizeLayer[5] = 400;
+  A->SizeLayer[6] = 200;
+  A->SizeLayer[7] = 200;
+  A->SizeLayer[8] = 100;
+  A->SizeLayer[9] = 100;
+  A->SizeLayer[10] = 4;
 
   A->Neurons = malloc (A->NumLayers * sizeof (bool *));
 
@@ -79,12 +82,12 @@ CreateOneBrain (struct Brain *A)
       *(A->Neurons + t) = malloc (A->SizeLayer[t] * sizeof (bool));
     }
 
-  A->Synapses = malloc (A->NumLayers * sizeof (float *));
+  A->Synapses = malloc (A->NumLayers * sizeof (short int *));
 
   for (int t = 0; t < (A->NumLayers - 1); t++)
     {
       *(A->Synapses + t) =
-	malloc ((A->SizeLayer[t] * A->SizeLayer[t + 1]) * sizeof (float));
+	malloc ((A->SizeLayer[t] * A->SizeLayer[t + 1]) * sizeof (short int));
     }
 
   for (int t = 0; t < (A->NumLayers - 1); t++)
@@ -126,7 +129,7 @@ SaveOneBrain (struct Brain *A, int i)
   for (int t = 0; t < (A->NumLayers - 1); t++)
     {
       int Num = (A->SizeLayer[t] * A->SizeLayer[t + 1]);
-      fwrite (*(A->Synapses + t), 1, (Num * sizeof (float)), file_handel);
+      fwrite (*(A->Synapses + t), 1, (Num * sizeof (short int)), file_handel);
     }
   fclose (file_handel);
 }
@@ -171,18 +174,18 @@ LoadOneBrain (struct Brain *A, int i)
       *(A->Neurons + t) = malloc (A->SizeLayer[t] * sizeof (bool));
     }
 
-  A->Synapses = malloc (A->NumLayers * sizeof (float *));
+  A->Synapses = malloc (A->NumLayers * sizeof (short int *));
 
   for (int t = 0; t < (A->NumLayers - 1); t++)
     {
       *(A->Synapses + t) =
-	malloc ((A->SizeLayer[t] * A->SizeLayer[t + 1]) * sizeof (float));
+	malloc ((A->SizeLayer[t] * A->SizeLayer[t + 1]) * sizeof (short int));
     }
 
   for (int t = 0; t < (A->NumLayers - 1); t++)
     {
       int Num = (A->SizeLayer[t] * A->SizeLayer[t + 1]);
-      fread (*(A->Synapses + t), 1, (Num * sizeof (float)), file_handel);
+      fread (*(A->Synapses + t), 1, (Num * sizeof (short int)), file_handel);
     }
 
   fclose (file_handel);
@@ -203,15 +206,15 @@ LoadBrains ()
 
 void
 ThinkLayer (bool * Upper_Layer, int Upper_size, bool * Lower_Layer,
-	    int Lower_size, float *weight)
+	    int Lower_size, short int *weight)
 {
-  float x = 0;
+  short int x = 0;
   for (int Lower_index = 0; Lower_index < Lower_size; Lower_index++)
     {
       x = 0;
       for (int Upper_index = 0; Upper_index < Upper_size; Upper_index++)
 	{
-	  float Temp_Weight =
+	  short int Temp_Weight =
 	    *(weight + (Lower_size * Upper_index) + Lower_index);
 	  x = x + Upper_Layer[Upper_index] * Temp_Weight;
 	}
@@ -233,7 +236,7 @@ Think (struct Brain *A)
       bool *LowerLayer = *(A->Neurons + i + 1);
       int UpperSize = *(A->SizeLayer + i);
       int LowerSize = *(A->SizeLayer + i + 1);
-      float *Weights = *(A->Synapses + i);
+      short int *Weights = *(A->Synapses + i);
       ThinkLayer (UpperLayer, UpperSize, LowerLayer, LowerSize, Weights);
     }
 }

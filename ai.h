@@ -11,7 +11,7 @@ struct Brain
   int *SizeLayer;		// how many neurons at layer
   bool **Neurons;		// collection of Neurons
   int NumSynapse;		// How many Synapse
-  float **Synapses;		// weighting between neurons
+  short int **Synapses;		// weighting between neurons
 };
 
 
