@@ -11,6 +11,7 @@
 
 // global settings from commandline
 int NumOfBrains = 1000;
+int NumToKeep = 400;
 int NumOfGenerations = 100;
 int Mutate = 1;			// percentage of mutate
 int CreateFlag = 0;		// do we need to create new population?
@@ -61,19 +62,13 @@ void
 CreateOneBrain (struct Brain *A)
 {
   A->Score = 0;
-  A->NumLayers = 11;
+  A->NumLayers = 5;
   A->SizeLayer = malloc (A->NumLayers * sizeof (int));
   A->SizeLayer[0] = 256;
-  A->SizeLayer[1] = 2400;
-  A->SizeLayer[2] = 1600;
-  A->SizeLayer[3] = 800;
-  A->SizeLayer[4] = 400;
-  A->SizeLayer[5] = 400;
-  A->SizeLayer[6] = 200;
-  A->SizeLayer[7] = 200;
-  A->SizeLayer[8] = 100;
-  A->SizeLayer[9] = 100;
-  A->SizeLayer[10] = 4;
+  A->SizeLayer[1] = 512;
+  A->SizeLayer[2] = 256;
+  A->SizeLayer[3] = 100;
+  A->SizeLayer[4] = 4;
 
   A->Neurons = malloc (A->NumLayers * sizeof (bool *));
 
@@ -286,28 +281,26 @@ MixBrains (struct Brain *A, struct Brain *B, struct Brain *C, int Mutate)
 void
 NextGeneration ()
 {
-srand(time(NULL));
-
   qsort (Population, NumOfBrains, sizeof (struct Brain), cmpfunc);
 
   printf ("Best Score: %d\n", (Population)->Score);
 
-  // Create next generation from best 10 brains.
-  for (int f = (NumOfBrains - 1); f > 20; f = f - 1)
+  // Create next generation from best "NumToKeep" brains.
+  for (int f = (NumOfBrains - 1); f > NumToKeep; f = f - 1)
     {
-      struct Brain *A = (Population + (rand () % 9));
-      struct Brain *B = (Population + (rand () % 9));
+      struct Brain *A = (Population + (rand () % NumToKeep));
+      struct Brain *B = (Population + (rand () % NumToKeep));
       struct Brain *C = (Population + f);
       MixBrains (A, B, C, Mutate);
     }
 
   // Create 10 random brains.
-  for (int f = 20; f > 10; f = f - 1)
+  for (int f = 0; f < 10; f++)
     {
       struct Brain *A = (Population + (rand () % 9));
       struct Brain *B = (Population + (rand () % 9));
-      struct Brain *C = (Population + f);
-      MixBrains (A, B, C, 99);
+      struct Brain *C = (Population + NumToKeep + f);
+      MixBrains (A, B, C, 99); //very high mutate
     }
 }
 
