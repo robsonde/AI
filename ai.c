@@ -7,21 +7,17 @@
 #include "ai.h"
 #include "game.h"
 
-
-
 // global settings from commandline
-int NumOfBrains = 1000;
-int NumToKeep = 400;
-int NumOfGenerations = 100;
-int Mutate = 1;			// percentage of mutate
-int CreateFlag = 0;		// do we need to create new population?
+int NumOfBrains = 1000;	// how many brains in population
+int NumToKeep = 400;	// how many to keep from each generation
+int NumOfGenerations = 100;// how many generations to run
+int Mutate = 1;		// percentage of mutate
+int CreateFlag = 0;	// create new population?
 
 
 
 // process the commandline and set global options
-int
-options (int argc, char **argv)
-{
+int options (int argc, char **argv) {
   int tmp;
 
   while ((tmp = getopt (argc, argv, "cg:n:m:")) != -1)
@@ -58,9 +54,7 @@ options (int argc, char **argv)
 
 
 /* creates a random brain */
-void
-CreateOneBrain (struct Brain *A)
-{
+void CreateOneBrain (struct Brain *A) {
   A->Score = 0;
   A->NumLayers = 5;
   A->SizeLayer = malloc (A->NumLayers * sizeof (int));
@@ -97,9 +91,7 @@ CreateOneBrain (struct Brain *A)
 
 
 /* creates a population of random brains */
-void
-CreateBrains ()
-{
+void CreateBrains () {
   for (int i = 0; i < NumOfBrains; i++)
     {
       CreateOneBrain ((Population + i));
@@ -108,9 +100,7 @@ CreateBrains ()
 
 
 
-void
-SaveOneBrain (struct Brain *A, int i)
-{
+void SaveOneBrain (struct Brain *A, int i) {
   FILE *file_handel;
   char FileName[15];
   sprintf (FileName, "brain_%d.bin", i);
@@ -131,9 +121,7 @@ SaveOneBrain (struct Brain *A, int i)
 
 
 
-void
-SaveBrains ()
-{
+void SaveBrains () {
   for (int i = 0; i < NumOfBrains; i++)
     {
       SaveOneBrain ((Population + i), i);
@@ -142,9 +130,7 @@ SaveBrains ()
 
 
 
-void
-LoadOneBrain (struct Brain *A, int i)
-{
+void LoadOneBrain (struct Brain *A, int i) {
   FILE *file_handel;
   char FileName[15];
   char Signture[2];
@@ -188,9 +174,7 @@ LoadOneBrain (struct Brain *A, int i)
 
 
 
-void
-LoadBrains ()
-{
+void LoadBrains () {
   for (int i = 0; i < NumOfBrains; i++)
     {
       LoadOneBrain ((Population + i), i);
@@ -199,10 +183,9 @@ LoadBrains ()
 
 
 
-void
-ThinkLayer (bool * Upper_Layer, int Upper_size, bool * Lower_Layer,
-	    int Lower_size, short int *weight)
-{
+void ThinkLayer (bool * Upper_Layer, int Upper_size,
+		 bool * Lower_Layer, int Lower_size,
+		 short int *weight) {
   short int x = 0;
   for (int Lower_index = 0; Lower_index < Lower_size; Lower_index++)
     {
@@ -222,9 +205,7 @@ ThinkLayer (bool * Upper_Layer, int Upper_size, bool * Lower_Layer,
 
 
 
-void
-Think (struct Brain *A)
-{
+void Think (struct Brain *A) {
   for (int i = 0; i < (A->NumLayers - 1); i++)
     {
       bool *UpperLayer = *(A->Neurons + i);
@@ -238,9 +219,7 @@ Think (struct Brain *A)
 
 
 
-int
-cmpfunc (const void *a, const void *b)
-{
+int cmpfunc (const void *a, const void *b) {
   struct Brain A = *(struct Brain *) a;
   struct Brain B = *(struct Brain *) b;
   int Foo = B.Score - A.Score;
@@ -250,14 +229,12 @@ cmpfunc (const void *a, const void *b)
 
 
 
-void
-MixBrains (struct Brain *A, struct Brain *B, struct Brain *C, int Mutate)
-{
+void MixBrains (struct Brain *A, struct Brain *B,
+		struct Brain *C, int Mutate) {
   for (int t = 0; t < (C->NumLayers - 1); t++)
     {
       for (int i = 0; i < (C->SizeLayer[t] * C->SizeLayer[t + 1]); i++)
 	{
-
 	  if ((rand () % 1024) > 512)
 	    {
 	      *(*(C->Synapses + t) + i) = *(*(A->Synapses + t) + i);
@@ -278,9 +255,7 @@ MixBrains (struct Brain *A, struct Brain *B, struct Brain *C, int Mutate)
 
 
 
-void
-NextGeneration ()
-{
+void NextGeneration () {
   qsort (Population, NumOfBrains, sizeof (struct Brain), cmpfunc);
 
   printf ("Best Score: %d\n", (Population)->Score);
@@ -306,11 +281,7 @@ NextGeneration ()
 
 
 
-
-
-int
-main (int argc, char **argv)
-{
+int main (int argc, char **argv) {
   options (argc, argv);
   Population = malloc (NumOfBrains * sizeof (struct Brain));
 
