@@ -9,7 +9,7 @@
 
 // global settings from commandline
 int NumOfBrains = 1000;	// how many brains in population
-int NumToKeep = 400;	// how many to keep from each generation
+int NumToKeep = 400;	// how many to keep per generation
 int NumOfGenerations = 100;// how many generations to run
 int Mutate = 1;		// percentage of mutate
 int CreateFlag = 0;	// create new population?
@@ -56,13 +56,18 @@ int options (int argc, char **argv) {
 /* creates a random brain */
 void CreateOneBrain (struct Brain *A) {
   A->Score = 0;
-  A->NumLayers = 5;
+  A->NumLayers = 10;
   A->SizeLayer = malloc (A->NumLayers * sizeof (int));
   A->SizeLayer[0] = 256;
-  A->SizeLayer[1] = 512;
-  A->SizeLayer[2] = 256;
-  A->SizeLayer[3] = 100;
-  A->SizeLayer[4] = 4;
+  A->SizeLayer[1] = 2048;
+  A->SizeLayer[2] = 2048;
+  A->SizeLayer[3] = 1024;
+  A->SizeLayer[4] = 1024;
+  A->SizeLayer[5] = 512;
+  A->SizeLayer[6] = 256;
+  A->SizeLayer[7] = 128;
+  A->SizeLayer[8] = 64;
+  A->SizeLayer[9] = 4;
 
   A->Neurons = malloc (A->NumLayers * sizeof (bool *));
 
@@ -186,7 +191,7 @@ void LoadBrains () {
 void ThinkLayer (bool * Upper_Layer, int Upper_size,
 		 bool * Lower_Layer, int Lower_size,
 		 short int *weight) {
-  short int x = 0;
+  int x = 0;
   for (int Lower_index = 0; Lower_index < Lower_size; Lower_index++)
     {
       x = 0;
