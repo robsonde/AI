@@ -8,9 +8,9 @@ struct Brain
 {
   int Score;			//score of brain
   int NumLayers;		// how many layers of neurons
+  int Header_Size;		// how Bytes make up the header 
   int *SizeLayer;		// how many neurons at layer
   bool **Neurons;		// collection of Neurons
-  int NumSynapse;		// How many Synapse
   short int **Synapses;		// weighting between neurons
 };
 

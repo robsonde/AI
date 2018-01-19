@@ -7,12 +7,22 @@
 #include "ai.h"
 #include "game.h"
 
+
 // global settings from commandline
-int NumOfBrains = 1000;	// how many brains in population
-int NumToKeep = 400;	// how many to keep per generation
-int NumOfGenerations = 100;// how many generations to run
-int Mutate = 1;		// percentage of mutate
-int CreateFlag = 0;	// create new population?
+int NumOfBrains = 100;		// how many brains in population
+int NumToKeep = 20;		// how many to keep per generation
+int NumToRegenerate = 20;	// how many to keep per generation
+int NumOfGames = 10;		// how many games to average
+int Mutate = 1;			// percentage of mutate
+int CreateFlag = 0;		// create new population?
+int HeaderSize = 0; 		// Size of file header
+
+
+struct BrainScore
+{
+  int Number;	//Index to which Brain file
+  int Score;	//Score of given Brain
+};
 
 
 
@@ -20,27 +30,34 @@ int CreateFlag = 0;	// create new population?
 int options (int argc, char **argv) {
   int tmp;
 
-  while ((tmp = getopt (argc, argv, "cg:n:m:")) != -1)
+  while ((tmp = getopt (argc, argv, "cg:n:m:k:r:")) != -1)
     switch (tmp)
       {
       case 'c':
-	CreateFlag = 1;
-	break;
+        CreateFlag = 1;
+        break;
       case 'g':
-	NumOfGenerations = atoi (optarg);
-	break;
+        NumOfGames = atoi (optarg);
+        break;
       case 'n':
-	NumOfBrains = atoi (optarg);
-	break;
+        NumOfBrains = atoi (optarg);
+        break;
       case 'm':
-	Mutate = atoi (optarg);
-	break;
+        Mutate = atoi (optarg);
+        break;
+      case 'k':
+        NumToKeep = atoi (optarg);
+        break;
+      case 'r':
+        NumToRegenerate = atoi (optarg);
+        break;
+
 
       case '?':
-	if (optopt == 'g')
-	  fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-	else if (optopt == 'n')
-	  fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+        if (optopt == 'g')
+          fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+        else if (optopt == 'n')
+          fprintf (stderr, "Option -%c requires an argument.\n", optopt);
 	else if (isprint (optopt))
 	  fprintf (stderr, "Unknown option `-%c'.\n", optopt);
 	else
@@ -53,10 +70,12 @@ int options (int argc, char **argv) {
 
 
 
+
 /* creates a random brain */
 void CreateOneBrain (struct Brain *A) {
   A->Score = 0;
   A->NumLayers = 10;
+  A->Header_Size=(A->NumLayers*4)+10;
   A->SizeLayer = malloc (A->NumLayers * sizeof (int));
   A->SizeLayer[0] = 256;
   A->SizeLayer[1] = 2048;
@@ -72,36 +91,36 @@ void CreateOneBrain (struct Brain *A) {
   A->Neurons = malloc (A->NumLayers * sizeof (bool *));
 
   for (int t = 0; t < A->NumLayers; t++)
-    {
-      *(A->Neurons + t) = malloc (A->SizeLayer[t] * sizeof (bool));
-    }
+  {
+    *(A->Neurons + t) = malloc (A->SizeLayer[t] * sizeof (bool));
+  }
 
   A->Synapses = malloc (A->NumLayers * sizeof (short int *));
 
   for (int t = 0; t < (A->NumLayers - 1); t++)
-    {
-      *(A->Synapses + t) =
-	malloc ((A->SizeLayer[t] * A->SizeLayer[t + 1]) * sizeof (short int));
-    }
+  {
+    *(A->Synapses + t) =
+    malloc ((A->SizeLayer[t] * A->SizeLayer[t + 1]) * sizeof (short int));
+  }
+}
 
+
+
+
+
+void RandomizeOneBrain (struct Brain *A) {
+  A->Score=0;
   for (int t = 0; t < (A->NumLayers - 1); t++)
+  {
+    for (int i = 0; i < (A->SizeLayer[t] * A->SizeLayer[t + 1]); i++)
     {
-      for (int i = 0; i < (A->SizeLayer[t] * A->SizeLayer[t + 1]); i++)
-	{
-	  *(*(A->Synapses + t) + i) = (rand () % 1024) - 512;
-	}
+      *(*(A->Synapses + t) + i) = (rand () % 1024) - 512;
     }
+  }
 }
 
 
 
-/* creates a population of random brains */
-void CreateBrains () {
-  for (int i = 0; i < NumOfBrains; i++)
-    {
-      CreateOneBrain ((Population + i));
-    }
-}
 
 
 
@@ -109,29 +128,22 @@ void SaveOneBrain (struct Brain *A, int i) {
   FILE *file_handel;
   char FileName[15];
   sprintf (FileName, "brain_%d.bin", i);
-  int TotalSynapse = A->NumSynapse;
   int NumLayers = A->NumLayers;
   file_handel = fopen (FileName, "wb");
   fwrite ("Br", 1, 2, file_handel);
+  fwrite (&A->Score, 1, sizeof (int), file_handel);
   fwrite (&NumLayers, 1, sizeof (int), file_handel);
+
   fwrite (A->SizeLayer, 1, NumLayers * sizeof (int), file_handel);
 
   for (int t = 0; t < (A->NumLayers - 1); t++)
-    {
-      int Num = (A->SizeLayer[t] * A->SizeLayer[t + 1]);
-      fwrite (*(A->Synapses + t), 1, (Num * sizeof (short int)), file_handel);
-    }
+  {
+    int Size_Of_Layer=(A->SizeLayer[t] * A->SizeLayer[t + 1]);
+    fwrite (*(A->Synapses + t), 1, Size_Of_Layer * sizeof (short int), file_handel);
+  }
   fclose (file_handel);
 }
 
-
-
-void SaveBrains () {
-  for (int i = 0; i < NumOfBrains; i++)
-    {
-      SaveOneBrain ((Population + i), i);
-    }
-}
 
 
 
@@ -150,41 +162,19 @@ void LoadOneBrain (struct Brain *A, int i) {
   // FIXME we read but dont check.
   fread (&Signture, 1, 2, file_handel);
 
+  fread (&A->Score, 1, sizeof (int), file_handel);
   fread (&A->NumLayers, 1, sizeof (int), file_handel);
-  A->SizeLayer = malloc (A->NumLayers * sizeof (int));
   fread (A->SizeLayer, 1, A->NumLayers * sizeof (int), file_handel);
 
-  A->Neurons = malloc (A->NumLayers * sizeof (bool *));
-  for (int t = 0; t < A->NumLayers; t++)
-    {
-      *(A->Neurons + t) = malloc (A->SizeLayer[t] * sizeof (bool));
-    }
-
-  A->Synapses = malloc (A->NumLayers * sizeof (short int *));
-
   for (int t = 0; t < (A->NumLayers - 1); t++)
-    {
-      *(A->Synapses + t) =
-	malloc ((A->SizeLayer[t] * A->SizeLayer[t + 1]) * sizeof (short int));
-    }
-
-  for (int t = 0; t < (A->NumLayers - 1); t++)
-    {
-      int Num = (A->SizeLayer[t] * A->SizeLayer[t + 1]);
-      fread (*(A->Synapses + t), 1, (Num * sizeof (short int)), file_handel);
-    }
+  {
+    int Size_Of_Layer=(A->SizeLayer[t] * A->SizeLayer[t + 1]);
+    fread (*(A->Synapses + t), 1, Size_Of_Layer * sizeof (short int), file_handel);
+  }
 
   fclose (file_handel);
 }
 
-
-
-void LoadBrains () {
-  for (int i = 0; i < NumOfBrains; i++)
-    {
-      LoadOneBrain ((Population + i), i);
-    }
-}
 
 
 
@@ -225,8 +215,9 @@ void Think (struct Brain *A) {
 
 
 int cmpfunc (const void *a, const void *b) {
-  struct Brain A = *(struct Brain *) a;
-  struct Brain B = *(struct Brain *) b;
+  struct BrainScore A = *(struct BrainScore*) a;
+  struct BrainScore B = *(struct BrainScore*) b;
+
   int Foo = B.Score - A.Score;
   return Foo;
 }
@@ -234,83 +225,132 @@ int cmpfunc (const void *a, const void *b) {
 
 
 
-void MixBrains (struct Brain *A, struct Brain *B,
-		struct Brain *C, int Mutate) {
-  for (int t = 0; t < (C->NumLayers - 1); t++)
+void MixBrains (int A, int B, int C, int Mutate) {
+  char FileName[15];
+  char TempByte;
+  short int TempA;
+  short int TempB;
+  short int TempC;
+
+  FILE *A_file_handel;
+  sprintf (FileName, "brain_%d.bin", A);
+  A_file_handel = fopen (FileName, "rb");
+
+  FILE *B_file_handel;
+  sprintf (FileName, "brain_%d.bin", B);
+  B_file_handel = fopen (FileName, "rb");
+
+  FILE *C_file_handel;
+  sprintf (FileName, "brain_%d.bin", C);
+  C_file_handel = fopen (FileName, "wb");
+
+  for (int i = 0; i < HeaderSize; i++)
+  {
+  fread (&TempByte, 1, 1, A_file_handel);
+  fread (&TempByte, 1, 1, B_file_handel);
+  fwrite (&TempByte, 1, 1, C_file_handel);
+  }
+
+  int BytesRead=sizeof(short int);
+  while(BytesRead==sizeof(short int) )
+  {
+    BytesRead = fread (&TempA, 1, sizeof(short int), A_file_handel);
+    BytesRead = fread (&TempB, 1, sizeof(short int), B_file_handel);
+
+    if((rand () % 1024)>512)
     {
-      for (int i = 0; i < (C->SizeLayer[t] * C->SizeLayer[t + 1]); i++)
-	{
-	  if ((rand () % 1024) > 512)
-	    {
-	      *(*(C->Synapses + t) + i) = *(*(A->Synapses + t) + i);
-	    }
-	  else
-	    {
-	      *(*(C->Synapses + t) + i) = *(*(B->Synapses + t) + i);
-	    }
-	  if ((rand () % 100) < (Mutate))
-	    {
-	      *(*(C->Synapses + t) + i) = (rand () % 1024) - 512;
-	    }
-	}
+      TempC=TempA;
     }
+    else
+    {
+      TempC=TempB;
+    }
+
+    if((rand () % 100)<Mutate)
+    {
+      TempC=(rand () % 1024) - 512;
+    }
+
+    if (BytesRead !=0)
+    {
+      fwrite (&TempC, 1, sizeof(short int), C_file_handel);
+    }
+  }
+
+  fclose (A_file_handel);
+  fclose (B_file_handel);
+  fclose (C_file_handel);
 }
 
 
 
 
 
-void NextGeneration () {
-  qsort (Population, NumOfBrains, sizeof (struct Brain), cmpfunc);
-
+void NextGeneration(struct BrainScore *Population) {
+  qsort (Population, NumOfBrains, sizeof (struct BrainScore), cmpfunc);
   printf ("Best Score: %d\n", (Population)->Score);
 
-  // Create next generation from best "NumToKeep" brains.
-  for (int f = (NumOfBrains - 1); f > NumToKeep; f = f - 1)
+  // mix some brains
+  for (int i = 0; i < (NumOfBrains-NumToKeep); i++)
+  {
+    int A = (Population+(rand () % NumToKeep))->Number;
+    int B = (Population+(rand () % NumToKeep))->Number;
+    int C = (Population+(NumOfBrains-i))->Number; 
+
+    if (i<NumToRegenerate)
     {
-      struct Brain *A = (Population + (rand () % NumToKeep));
-      struct Brain *B = (Population + (rand () % NumToKeep));
-      struct Brain *C = (Population + f);
+      MixBrains (A, B, C, 100);
+    }
+    else
+    {
       MixBrains (A, B, C, Mutate);
     }
-
-  // Create 10 random brains.
-  for (int f = 0; f < 10; f++)
-    {
-      struct Brain *A = (Population + (rand () % 9));
-      struct Brain *B = (Population + (rand () % 9));
-      struct Brain *C = (Population + NumToKeep + f);
-      MixBrains (A, B, C, 99); //very high mutate
-    }
+  }
 }
+
 
 
 
 int main (int argc, char **argv) {
+srand(time(0));
+  struct Brain *NewBrain;
+  NewBrain = malloc (sizeof(struct Brain));
+  CreateOneBrain(NewBrain);
+  HeaderSize=NewBrain->Header_Size;
+
   options (argc, argv);
-  Population = malloc (NumOfBrains * sizeof (struct Brain));
 
   if (CreateFlag == 1)
+  {
+    for (int i = 0; i < NumOfBrains; i++)
     {
-      CreateBrains ();
-      SaveBrains ();
-      printf ("Made %d brains\n", NumOfBrains);
+      RandomizeOneBrain(NewBrain);
+      SaveOneBrain(NewBrain,i);
     }
+    printf ("Made %d brains\n", NumOfBrains);
+  }
   else
+  {
+  struct BrainScore *Population;
+  Population = malloc (sizeof(struct BrainScore) * NumOfBrains);
+
+    for (int i = 0; i < NumOfBrains; i++)
     {
-      LoadBrains ();
-      printf ("Loaded %d brains\n", NumOfBrains);
-      printf ("Ready to run brains\n");
+      LoadOneBrain(NewBrain,i);
+      NewBrain->Score=0;
 
-      for (int g = 0; g < NumOfGenerations; g++)
-	{
+      for (int t = 0; t < NumOfGames; t++)
+      {
+        Play(NewBrain);
+      }
 
-	  for (int i = 0; i < NumOfBrains; i++)
-	    {
-	      Play ((Population + i));
-	    }
-	  NextGeneration ();
-	}
-      SaveBrains ();
+      (Population+i)->Number=i;
+      (Population+i)->Score=NewBrain->Score;
+      SaveOneBrain(NewBrain,i);
     }
+    printf ("Run %d brains\n", NumOfBrains);
+    NextGeneration(Population);
+  }
 }
+
+
